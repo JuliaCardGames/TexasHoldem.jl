@@ -34,6 +34,8 @@ coincide.
 struct Players{PS<:Union{Tuple,AbstractArray}}
     players::PS
     function Players(players)
+        @assert !isempty(players)
+        @assert players[1] isa Player
         @assert allunique(map(x->seat_number(x), players))
         spbsn = sortperm_by_seat_number(players)
         splayers = map(sp->players[sp], spbsn)
@@ -41,6 +43,7 @@ struct Players{PS<:Union{Tuple,AbstractArray}}
         return new{typeof(splayers)}(splayers)
     end
 end
+Players(players...) = Players(players)
 
 sortperm_by_seat_number(players::Tuple) = TupleTools.sortperm(map(x->seat_number(x), players))
 sortperm_by_seat_number(players) = Base.sortperm(map(x->seat_number(x), players))

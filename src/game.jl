@@ -272,7 +272,7 @@ end
 ∑bank_rolls(players) =
     mapreduce(x->bank_roll_chips(x), +, players; init=Chips(0))
 
-function _deal_and_play!(game::Game, sf::StartFrom)
+function _deal!(game::Game, sf::StartFrom)
     logger = game.table.logger
     table = game.table
     winners = table.winners
@@ -317,7 +317,16 @@ function _deal_and_play!(game::Game, sf::StartFrom)
         deal!(table, blinds(table))
         @assert cards(table) ≠ nothing
     end
+end
 
+function _play!(game::Game, sf::StartFrom = StartFrom(StartOfGame());
+        initial_brs,
+    )
+    initial_∑brs = sum(initial_brs)
+    logger = game.table.logger
+    table = game.table
+    winners = table.winners
+    players = players_at_table(table)
     winners.declared || act!(game, PreFlop(), sf)   # Pre-flop bet/check/raise
     winners.declared || act!(game, Flop(), sf)      # Deal flop , then bet/check/raise
     winners.declared || act!(game, Turn(), sf)      # Deal turn , then bet/check/raise
@@ -364,6 +373,21 @@ function _deal_and_play!(game::Game, sf::StartFrom)
 
     @cinfo logger "------ Finished game!"
     return winners
+end
+
+function _deal_and_play!(game::Game, sf::StartFrom)
+    logger = game.table.logger
+    table = game.table
+    players = players_at_table(table)
+
+    initial_brs = game.initial_brs
+    if sf.game_point isa StartOfGame
+        for (pidx, player) in enumerate(players)
+            initial_brs[pidx] = bank_roll(player)
+        end
+    end
+    _deal!(game, sf)
+    _play!(game, sf; initial_brs)
 end
 
 function set_active_status!(table::Table)

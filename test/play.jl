@@ -187,3 +187,40 @@ n_call_actions = [0]
     # 3 checks (river)
     @test n_check_actions[1] == 3
 end
+
+@testset "Test reward" begin
+    logger=TH.InfoLogger()
+    # logger=TH.ByPassLogger()
+    # custom deal:
+    players = (
+        Player(BotCheckCall(), 1, (A♠, A♣); bank_roll = 1*100),
+        Player(BotCheckCall(), 2, (K♠, K♣); bank_roll = 2*100),
+        Player(BotRaiseAllIn(), 3, (Q♠, Q♣); bank_roll = 3*100),
+    )
+    table_cards = (A♢, K♡, Q♢, 2♠, 3♠)
+    tm = TH.TransactionManager(players)
+    table = Table(players;cards=table_cards,transactions=tm, logger)
+    # TH._play!(QuietGame(players; dealer_pidx = 1))
+    initial_brs = deepcopy(bank_roll.(players))
+    TH.contribute!(table, players[2], 1, true)
+    TH.contribute!(table, players[3], 2, true)
+    TH._play!(Game(table); initial_brs)
+    # @test players[1].game_profit == 200
+    # @test players[2].game_profit == 0
+    # @test players[3].game_profit == -200
+
+    # # custom deal:
+    # players = (
+    #     Player(BotCheckCall(), 1, (A♠, A♣); bank_roll = 1*100),
+    #     Player(BotCheckCall(), 2, (K♠, K♣); bank_roll = 2*100),
+    #     Player(BotRaiseAllIn(), 3, (Q♠, Q♣); bank_roll = 3*100),
+    # )
+    # table_cards = (A♢, K♡, Q♢, 2♠, 3♠)
+    # tm = TH.TransactionManager(players)
+    # table = Table(players;cards=table_cards,transactions=tm, logger)
+    # # TH._play!(QuietGame(players; dealer_pidx = 1))
+    # TH._play!(Game(table))
+    # @test players[1].game_profit == 200
+    # @test players[2].game_profit == -100
+    # @test players[3].game_profit == -100
+end
